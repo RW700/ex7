@@ -13,12 +13,21 @@ MAIN_SORT_OWNERS = 4
 MAIN_PRINT_ALL = 5
 MAIN_EXIT = 6
 
-# owner sub-menu options
+# Owner sub-menu options
 OWNER_ADD_POKEMON = 1
 OWNER_DISPLAY_POKEDEX = 2
 OWNER_RELEASE_POKEMON = 3
 OWNER_EVOLVE_POKEMON = 4
 OWNER_BACK = 5
+
+# Pokedex display menu options
+DISP_CERTAIN_TYPE = 1
+DISP_EVOLVABLE = 2
+DISP_ATTACK_ABOVE = 3
+DISP_HP_ABOVE = 4
+DISP_NAME_STARTS = 5
+DISP_ALL = 6
+DISP_BACK = 7
 
 ########################
 # 0) Read from CSV -> HOENN_DATA
@@ -74,16 +83,17 @@ def read_int_safe(prompt):
     # loop for invalid input / account for negative
     while True:
         # check negative
-        if usr_input[0] == "-":
-            negative = True
-            usr_input = usr_input[1:]
+        if usr_input:
+            if usr_input[0] == "-":
+                negative = True
+                usr_input = usr_input[1:]
 
-        # chekc if input is digit
+        # check if input is digit
         if usr_input.isdigit():
             break
 
         # if not digit, print invalid input and re-prompt
-        print("Invalid input. ()")
+        print("Invalid input.")
         negative = False
         usr_input = input(prompt).strip()
 
@@ -114,8 +124,68 @@ def display_pokemon_list(poke_list):
     """
     Display a list of Pokemon dicts, or a message if empty.
     """
-    pass
+    # case for empty list
+    if not poke_list:
+        print("There are no Pokemons in this Pokedex that match the criteria.")
+        return
+    
+    # print each pokemon in the list in order in format ID, Name, Type, HP, Attack, Can Evolve
+    for pokemon in poke_list:
+        print(f"ID: {pokemon['ID']}, Name: {pokemon['Name']}, Type: {pokemon['Type']}, HP: {pokemon['HP']}, Attack: {pokemon['Attack']}, Can Evolve: {pokemon['Can Evolve']}")
 
+
+def display_certian_type(poke_list):
+    """
+    Display only Pokemon of a certain type.
+    """
+    # get type from user
+    type_choice = input("Which Type? (e.g. GRASS, WATER): ")
+    # create list of Pokemon that match the type (cast to lower so case insensitive)
+    type_list = [pokemon for pokemon in poke_list if pokemon['Type'].lower() == type_choice.lower()]
+    # display the list
+    display_pokemon_list(type_list)
+
+def display_evolvable(poke_list):
+    """
+    Display only Pokemon that can evolve.
+    """
+    # create list of Pokemon that can evolve
+    evolve_list = [pokemon for pokemon in poke_list if pokemon['Can Evolve'] == "TRUE"]
+    # display the list
+    display_pokemon_list(evolve_list)
+
+def display_atack_above(poke_list):
+    """
+    Display only Pokemon with an attack above a certain value.
+    """
+    # get attack value from user
+    attack_choice = read_int_safe("Enter Attack threshold: ")
+    # create list of Pokemon with attack above the value
+    attack_list = [pokemon for pokemon in poke_list if pokemon['Attack'] > attack_choice]
+    # display the list
+    display_pokemon_list(attack_list)
+
+def display_hp_above(poke_list):
+    """
+    Display only Pokemon with HP above a certain value.
+    """
+    # get HP value from user
+    hp_choice = read_int_safe("Enter HP threshold: ")
+    # create list of Pokemon with HP above the value
+    hp_list = [pokemon for pokemon in poke_list if pokemon['HP'] > hp_choice]
+    # display the list
+    display_pokemon_list(hp_list)
+
+def display_name_starts(poke_list):
+    """
+    Display only Pokemon whose name starts with a certain letter(s).
+    """
+    # get starting letters from user
+    name_choice = input("Starting letter(s): ")
+    # create list of Pokemon with names starting with the letters
+    name_list = [pokemon for pokemon in poke_list if pokemon['Name'].lower().startswith(name_choice.lower())]
+    # display the list
+    display_pokemon_list(name_list)
 
 ########################
 # 2) BST (By Owner Name)
@@ -356,7 +426,42 @@ def display_filter_sub_menu(owner_node):
     6) All
     7) Back
     """
-    pass
+
+    while True:
+        # print menu options
+        print("\n-- Display Filter Menu --")
+        print("1. Only a certain Type")
+        print("2. Only Evolvable")
+        print("3. Only Attack above __")
+        print("4. Only HP above __")
+        print("5. Only names starting with letter(s)")
+        print("6. All of them!")
+        print("7. Back")
+        # get choice and call relecant function
+        choice = read_int_safe("Your choice: ")
+        if choice == DISP_CERTAIN_TYPE:
+            display_certian_type(owner_node['pokedex'])
+            pass
+        elif choice == DISP_EVOLVABLE:
+            display_evolvable(owner_node['pokedex'])
+            pass
+        elif choice == DISP_ATTACK_ABOVE:
+            display_atack_above(owner_node['pokedex'])
+            pass
+        elif choice == DISP_HP_ABOVE:
+            display_hp_above(owner_node['pokedex'])
+            pass
+        elif choice == DISP_NAME_STARTS:
+            display_name_starts(owner_node['pokedex'])
+            pass
+        elif choice == DISP_ALL:
+            display_pokemon_list(owner_node['pokedex'])
+            pass
+        elif choice == DISP_BACK:
+            print("Back to Pokedex Menu.")
+            return
+        else:
+            print("Invalid choice.")
 
 
 ########################
@@ -397,12 +502,12 @@ def existing_pokedex():
         print("4. Evolve Pokemon")
         print("5. Back to Main")
         choice = read_int_safe("Your choice: ")
-        # TODO: UP TO HERE IN LOGIC
         if choice == OWNER_ADD_POKEMON:
             add_pokemon_to_owner(owner_node)
             pass
         elif choice == OWNER_DISPLAY_POKEDEX:
-            # display_filter_sub_menu(owner_node)
+                # TODO: UP TO HERE IN LOGIC
+            display_filter_sub_menu(owner_node)
             pass
         elif choice == OWNER_RELEASE_POKEMON:
             # release_pokemon_by_name(owner_node)
