@@ -106,18 +106,18 @@ def get_poke_dict_by_id(poke_id):
     """
     Return a copy of the Pokemon dict from HOENN_DATA by ID, or None if not found.
     """
-    for pokeDict in HOENN_DATA:
-        if pokeDict["ID"] == poke_id:
-            return pokeDict
+    for poke_dict in HOENN_DATA:
+        if poke_dict["ID"] == poke_id:
+            return poke_dict
     return None
 
 def get_poke_dict_by_name(name):
     """
     Return a copy of the Pokemon dict from HOENN_DATA by name, or None if not found.
     """
-    for pokeDict in HOENN_DATA:
-        if pokeDict["Name"] == name:
-            return pokeDict
+    for poke_dict in HOENN_DATA:
+        if poke_dict["Name"] == name:
+            return poke_dict
     return None
 
 def display_pokemon_list(poke_list):
@@ -233,11 +233,11 @@ def create_owner_node(owner_name, first_pokemon=None):
     Create and return a BST node dict with keys: 'owner', 'pokedex', 'left', 'right'.
     """
     # create dict (BST node) with owner name, pokedex, and left/right as None
-    ownerDict = {'owner': owner_name, 
+    owner_dict = {'owner': owner_name, 
                  'pokedex': [first_pokemon],
                  'left': None,
                  'right': None}
-    return ownerDict
+    return owner_dict
 
 def insert_owner_bst(root, new_node):
     """
@@ -272,13 +272,13 @@ def find_owner_bst(root, owner_name):
         return root
     # check BOTH sides to account for edge case in capital letters
     # get left side recursive, if exists, ie not None, return it
-    leftSide = find_owner_bst(root['left'], owner_name)
-    if leftSide:
-        return leftSide
+    left_side = find_owner_bst(root['left'], owner_name)
+    if left_side:
+        return left_side
     # get right side recursive, if exists, ie not None, return it
-    rightSide = find_owner_bst(root['right'], owner_name)
-    if rightSide:
-        return rightSide
+    right_side = find_owner_bst(root['right'], owner_name)
+    if right_side:
+        return right_side
     # if here, then no owner found, return None
     return None
 
@@ -333,27 +333,38 @@ def add_pokemon_to_owner(owner_node):
     Prompt user for a Pokemon ID, find the data, and add to this owner's pokedex if not duplicate.
     """
     # first, get the ID of the Pokemon to add
-    IDChoice = read_int_safe("Enter Pokemon ID to add: ")
+    ID_choice = read_int_safe("Enter Pokemon ID to add: ")
     # next, get the Pokemon dict by ID
-    pokemonToAdd = get_poke_dict_by_id(IDChoice)
+    pokemon_to_add = get_poke_dict_by_id(ID_choice)
     # if the Pokemon is not found, print message and return
-    if not pokemonToAdd:
-        print(f"ID {IDChoice} not found in Honen data.")
+    if not pokemon_to_add:
+        print(f"ID {ID_choice} not found in Honen data.")
         return
     # if the Pokemon is already in the pokedex, print message and return
-    if pokemonToAdd in owner_node['pokedex']:
+    if pokemon_to_add in owner_node['pokedex']:
         print(f"Pokemon already in the list. No changes made.")
         return
     # if the Pokemon is not in the pokedex, add it and print success message
-    owner_node['pokedex'].append(pokemonToAdd)
-    print(f"Pokemon {pokemonToAdd['Name']} (ID {pokemonToAdd['ID']}) added to {owner_node['owner']}'s Pokedex.")
+    owner_node['pokedex'].append(pokemon_to_add)
+    print(f"Pokemon {pokemon_to_add['Name']} (ID {pokemon_to_add['ID']}) added to {owner_node['owner']}'s Pokedex.")
 
 
 def release_pokemon_by_name(owner_node):
     """
     Prompt user for a Pokemon name, remove it from this owner's pokedex if found.
     """
-    pass
+    
+    # get the name of the Pokemon to release
+    name_choice = input("Enter Pokemon Name to release: ")
+    # iterate over list till find the name, then remove it
+    for pokemon in owner_node['pokedex']:
+        if pokemon['Name'].lower() == name_choice.lower():
+            print(f"Releasing {pokemon['Name']} from {owner_node['owner']}.")
+            owner_node['pokedex'].remove(pokemon)
+            return
+    # if not found, print message and return
+    print(f"No Pokemon named '{name_choice}' in {owner_node['owner']}'s Pokedex.")
+
 
 def evolve_pokemon_by_name(owner_node):
     """
@@ -363,7 +374,33 @@ def evolve_pokemon_by_name(owner_node):
     3) Insert new
     4) If new is a duplicate, remove it immediately
     """
-    pass
+    # get name of pokemon to evolve
+    name_choice = input("Enter Pokemon Name to evolve: ")
+    # 4 cases: not found, cannot evolve, evolution in list, and evolution not in list
+    # iterate over list till find the name, then remove it
+    for pokemon in owner_node['pokedex']:
+        if pokemon['Name'].lower() == name_choice.lower():
+            # case: cannot evolve: print message and return
+            if pokemon['Can Evolve'] == "FALSE":
+                print(f"{pokemon['Name']} cannot evolve.")
+                return
+            # 2 cases: evolution in list and evolution not in list:
+            # call funct to check if ID+1 is in list
+            evolution = get_poke_dict_by_id(pokemon['ID'] + 1)
+            print(f"Pokemon evolved from {pokemon['Name']} (ID {pokemon['ID']}) to {evolution['Name']} (ID {evolution['ID']}).")
+
+            # case: evolution in list, remove old, print message and return
+            if evolution in owner_node['pokedex']:
+                # Marshtomp was already present; releasing it immediately.
+                print(f"{evolution['Name']} was already present; releasing it immediately.")
+                owner_node['pokedex'].remove(pokemon)
+                return
+            # case: evolution not in list, remove old, add new, return
+            owner_node['pokedex'].remove(pokemon)
+            owner_node['pokedex'].append(evolution)
+            return
+    # case: not found, print message and return:
+    print(f"No Pokemon named '{name_choice}' in {owner_node['owner']}'s Pokedex.")
 
 
 ########################
@@ -506,16 +543,16 @@ def existing_pokedex():
             add_pokemon_to_owner(owner_node)
             pass
         elif choice == OWNER_DISPLAY_POKEDEX:
-                # TODO: UP TO HERE IN LOGIC
             display_filter_sub_menu(owner_node)
             pass
         elif choice == OWNER_RELEASE_POKEMON:
-            # release_pokemon_by_name(owner_node)
+            release_pokemon_by_name(owner_node)
             pass
         elif choice == OWNER_EVOLVE_POKEMON:
-            # evolve_pokemon_by_name(owner_node)
+            evolve_pokemon_by_name(owner_node)
             pass
         elif choice == OWNER_BACK:
+            print("Back to Main Menu.")
             return
         else:
             print("Invalid choice.")
@@ -551,6 +588,7 @@ def main_menu():
             existing_pokedex()
             pass
         elif choice == MAIN_DELETE_POKEDEX:
+                # TODO: UP TO HERE IN LOGIC
             pass
         elif choice == MAIN_SORT_OWNERS:
             pass
