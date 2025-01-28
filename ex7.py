@@ -3,6 +3,16 @@ import csv
 # Global BST root
 ownerRoot = None
 
+# 'defines' for getting rid of magic numbers
+
+# Main menu options
+MAIN_NEW_POKEDEX = 1
+MAIN_EXIST_POKEDEX = 2
+MAIN_DELETE_POKEDEX = 3
+MAIN_SORT_OWNERS = 4
+MAIN_PRINT_ALL = 5
+MAIN_EXIT = 6
+
 ########################
 # 0) Read from CSV -> HOENN_DATA
 ########################
@@ -50,7 +60,12 @@ def read_int_safe(prompt):
     """
     Prompt the user for an integer, re-prompting on invalid input.
     """
-    pass
+    # TODO: ADD EDGE CASE FOR NEGATIVE NUMBERS
+    usr_input = input(prompt)
+    while not usr_input.isdigit():
+        print("Invalid input.")
+        usr_input = input(prompt)
+    return int(usr_input)
 
 def get_poke_dict_by_id(poke_id):
     """
@@ -62,7 +77,10 @@ def get_poke_dict_by_name(name):
     """
     Return a copy of the Pokemon dict from HOENN_DATA by name, or None if not found.
     """
-    pass
+    for pokeDict in HOENN_DATA:
+        if pokeDict["Name"] == name:
+            return pokeDict
+    return None
 
 def display_pokemon_list(poke_list):
     """
@@ -75,23 +93,85 @@ def display_pokemon_list(poke_list):
 # 2) BST (By Owner Name)
 ########################
 
+def create_owner_logic():
+    """
+    Get information from user to create new owner node and insert into BST.
+    """
+
+    global ownerRoot
+    # first get new owner info:
+    new_owner_name = input("Owner name: ")
+    # check if owner is already in tree:
+    if find_owner_bst(ownerRoot, new_owner_name):
+        print(f"Owner '{new_owner_name}' already exists. No new Pokedex created.")
+        return
+    print("Choose your starter Pokemon:\n1) Treecko\n2) Torchic\n3) Mudkip")
+    starter_choice = read_int_safe("Your choice: ")
+    if starter_choice == 1:
+        choice_name = "Treecko"
+    elif starter_choice == 2:
+        choice_name = "Torchic"
+    elif starter_choice == 3:
+        choice_name = "Mudkip"
+    else:
+        print("Invalid. No new Pokedex created.")
+        return
+    # create the node
+    owner_node = create_owner_node(new_owner_name, get_poke_dict_by_name(choice_name))
+    # insert new owner node into BST
+    ownerRoot = insert_owner_bst(ownerRoot, owner_node)
+    print(f"New Pokedex created for {new_owner_name} with starter {choice_name}.")
+
+
 def create_owner_node(owner_name, first_pokemon=None):
     """
     Create and return a BST node dict with keys: 'owner', 'pokedex', 'left', 'right'.
     """
-    pass
+    ownerDict = {'owner': owner_name, 
+                 'pokedex': [first_pokemon],
+                 'left': None,
+                 'right': None}
+    return ownerDict
 
 def insert_owner_bst(root, new_node):
     """
     Insert a new BST node by owner_name (alphabetically). Return updated root.
     """
-    pass
+
+    # first, if root is empty, insert node here
+    if root == None:
+        return new_node
+    # next, if new node's owner name is less than root's owner name, insert left
+    if new_node['owner'] < root['owner']:
+        root['left'] = insert_owner_bst(root['left'], new_node)
+    # if new node's owner name is greater than root's owner name, insert right
+    elif new_node['owner'] > root['owner']:
+        root['right'] = insert_owner_bst(root['right'], new_node)
+    # now that we've inserted, return the root
+    return root
+    
 
 def find_owner_bst(root, owner_name):
     """
     Locate a BST node by owner_name. Return that node or None if missing.
     """
-    pass
+    # must check both sides, as because of capital letters, we don't necessarily know bigger or smaller
+    # if root is empty, return None
+    if root == None:
+        return None
+    if owner_name.lower() == root['owner'].lower():
+        return root
+    # check BOTH sides to account for edge case in capital letters
+    # get left side recursive, if exists, ie not None, return it
+    leftSide = find_owner_bst(root['left'], owner_name)
+    if leftSide:
+        return leftSide
+    # get right side recursive, if exists, ie not None, return it
+    rightSide = find_owner_bst(root['right'], owner_name)
+    if rightSide:
+        return rightSide
+    # if here, then no owner found, return None
+    return None
 
 def min_node(node):
     """
@@ -250,13 +330,41 @@ def main_menu():
     5) Print all
     6) Exit
     """
-    pass
+
+    while True:
+        # print main menu options
+        print("\n=== Main Menu ===")
+        print("1. New Pokedex")
+        print("2. Existing Pokedex")
+        print("3. Delete a Pokedex")
+        print("4. Sort owners")
+        print("5. Print all")
+        print("6. Exit")
+
+        # get choice and check which option that is
+        choice = read_int_safe("Your choice: ")
+        if choice == MAIN_NEW_POKEDEX:
+            create_owner_logic()
+            pass
+        elif choice == MAIN_EXIST_POKEDEX:
+            pass
+        elif choice == MAIN_DELETE_POKEDEX:
+            pass
+        elif choice == MAIN_SORT_OWNERS:
+            pass
+        elif choice == MAIN_PRINT_ALL:
+            pass
+        elif choice == MAIN_EXIT:
+            print("Goodbye!")
+            return
+        else:
+            print("Invalid choice.")
 
 def main():
     """
     Entry point: calls main_menu().
     """
-    pass
+    main_menu()
 
 if __name__ == "__main__":
     main()
