@@ -1,3 +1,5 @@
 pokemons/
 .python-version
 /.vscode/
+*.zip
+

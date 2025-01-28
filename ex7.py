@@ -131,7 +131,7 @@ def display_pokemon_list(poke_list):
     Display a list of Pokemon dicts, or a message if empty.
     """
     # case for empty list
-    if not poke_list:
+    if not poke_list or poke_list == [None]:
         print("There are no Pokemons in this Pokedex that match the criteria.")
         return
     
@@ -254,13 +254,11 @@ def insert_owner_bst(root, new_node):
     if root == None:
         return new_node
     # next, if new node's owner name is less than root's owner name, insert left
-    if new_node['owner'] < root['owner']:
+    if new_node['owner'].lower() < root['owner'].lower():
         root['left'] = insert_owner_bst(root['left'], new_node)
-        pass
     # if new node's owner name is greater than root's owner name, insert right
-    elif new_node['owner'] > root['owner']:
+    elif new_node['owner'].lower() > root['owner'].lower():
         root['right'] = insert_owner_bst(root['right'], new_node)
-        pass
     # now that we've inserted, return the root
     return root
     
@@ -306,7 +304,7 @@ def delete_owner_logic():
             print("No owners to delete.")
             return
         # first check if to delete owner is in tree, if not, print message and return
-        owner_to_delete = input("Owner name: ")
+        owner_to_delete = input("Enter owner to delete: ")
         if not find_owner_bst(ownerRoot, owner_to_delete):
             print(f"Owner '{owner_to_delete}' not found.")
             return
@@ -377,6 +375,10 @@ def pre_order(root):
     """
     Pre-order traversal (root -> left -> right). Print data for each node.
     """
+    # if root is None, return immediately
+    if root is None:
+        return
+
     # print out root, then left side (recursively), then right side
     # current node:
     print(f"\nOwner: {root['owner']}")
@@ -392,6 +394,10 @@ def in_order(root):
     """
     In-order traversal (left -> root -> right). Print data for each node.
     """
+    # if root is None, return immediately
+    if root is None:
+        return
+
     # print out leftside, then root, then right side
     # left side nodes:
     if root['left']:
@@ -408,6 +414,10 @@ def post_order(root):
     """
     Post-order traversal (left -> right -> root). Print data for each node.
     """
+    # if root is None, return immediately
+    if root is None:
+        return
+
     # print out leftside, then right side, then root
     # left side nodes:
     if root['left']:
@@ -549,6 +559,7 @@ def sort_owners_by_num_pokemon():
                 if owner_list[j][0].lower() > owner_list[j + 1][0].lower():
                     owner_list[j], owner_list[j + 1] = owner_list[j + 1], owner_list[j]
 
+    print("=== The Owners we have, sorted by number of Pokemons ===")
     for owner in owner_list:
         print(f"Owner: {owner[0]} (has {owner[1]} Pokemon)")
 
@@ -567,9 +578,9 @@ def print_all_owners():
         return
     # print menu options and get choice
     print("1) BFS")
-    print("2) Pre-order")
-    print("3) In-order")
-    print("4) Post-order")
+    print("2) Pre-Order")
+    print("3) In-Order")
+    print("4) Post-Order")
     choice = read_int_safe("Your choice: ")
     # call relevant function based on choice
     if choice == PRINT_OWNER_BFS:
@@ -734,7 +745,7 @@ def main_menu():
         print("2. Existing Pokedex")
         print("3. Delete a Pokedex")
         print("4. Display owners by number of Pokemon")
-        print("5. Print all")
+        print("5. Print All")
         print("6. Exit")
 
         # get choice and check which option that is
