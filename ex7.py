@@ -13,6 +13,13 @@ MAIN_SORT_OWNERS = 4
 MAIN_PRINT_ALL = 5
 MAIN_EXIT = 6
 
+# owner sub-menu options
+OWNER_ADD_POKEMON = 1
+OWNER_DISPLAY_POKEDEX = 2
+OWNER_RELEASE_POKEMON = 3
+OWNER_EVOLVE_POKEMON = 4
+OWNER_BACK = 5
+
 ########################
 # 0) Read from CSV -> HOENN_DATA
 ########################
@@ -60,18 +67,39 @@ def read_int_safe(prompt):
     """
     Prompt the user for an integer, re-prompting on invalid input.
     """
-    # TODO: ADD EDGE CASE FOR NEGATIVE NUMBERS
-    usr_input = input(prompt)
-    while not usr_input.isdigit():
-        print("Invalid input.")
-        usr_input = input(prompt)
+    # negative bool to accoutn for negative inputs
+    negative = False
+    # take input, and strip whitespace
+    usr_input = input(prompt).strip()
+    # loop for invalid input / account for negative
+    while True:
+        # check negative
+        if usr_input[0] == "-":
+            negative = True
+            usr_input = usr_input[1:]
+
+        # chekc if input is digit
+        if usr_input.isdigit():
+            break
+
+        # if not digit, print invalid input and re-prompt
+        print("Invalid input. ()")
+        negative = False
+        usr_input = input(prompt).strip()
+
+    # convert to int, and return negative if negative
+    if negative:
+        return int(usr_input) * -1
     return int(usr_input)
 
 def get_poke_dict_by_id(poke_id):
     """
     Return a copy of the Pokemon dict from HOENN_DATA by ID, or None if not found.
     """
-    pass
+    for pokeDict in HOENN_DATA:
+        if pokeDict["ID"] == poke_id:
+            return pokeDict
+    return None
 
 def get_poke_dict_by_name(name):
     """
@@ -98,6 +126,7 @@ def create_owner_logic():
     Get information from user to create new owner node and insert into BST.
     """
 
+    # set ownerRoot as global ownerRoot for this function
     global ownerRoot
     # first get new owner info:
     new_owner_name = input("Owner name: ")
@@ -105,21 +134,27 @@ def create_owner_logic():
     if find_owner_bst(ownerRoot, new_owner_name):
         print(f"Owner '{new_owner_name}' already exists. No new Pokedex created.")
         return
+    # next, get starter choice and assign name as string
     print("Choose your starter Pokemon:\n1) Treecko\n2) Torchic\n3) Mudkip")
     starter_choice = read_int_safe("Your choice: ")
     if starter_choice == 1:
         choice_name = "Treecko"
+        pass
     elif starter_choice == 2:
         choice_name = "Torchic"
+        pass
     elif starter_choice == 3:
         choice_name = "Mudkip"
+        pass
     else:
+        # edge case: invalid choice number, return without creating new owner
         print("Invalid. No new Pokedex created.")
         return
     # create the node
     owner_node = create_owner_node(new_owner_name, get_poke_dict_by_name(choice_name))
     # insert new owner node into BST
     ownerRoot = insert_owner_bst(ownerRoot, owner_node)
+    # print success message
     print(f"New Pokedex created for {new_owner_name} with starter {choice_name}.")
 
 
@@ -127,6 +162,7 @@ def create_owner_node(owner_name, first_pokemon=None):
     """
     Create and return a BST node dict with keys: 'owner', 'pokedex', 'left', 'right'.
     """
+    # create dict (BST node) with owner name, pokedex, and left/right as None
     ownerDict = {'owner': owner_name, 
                  'pokedex': [first_pokemon],
                  'left': None,
@@ -144,9 +180,11 @@ def insert_owner_bst(root, new_node):
     # next, if new node's owner name is less than root's owner name, insert left
     if new_node['owner'] < root['owner']:
         root['left'] = insert_owner_bst(root['left'], new_node)
+        pass
     # if new node's owner name is greater than root's owner name, insert right
     elif new_node['owner'] > root['owner']:
         root['right'] = insert_owner_bst(root['right'], new_node)
+        pass
     # now that we've inserted, return the root
     return root
     
@@ -159,6 +197,7 @@ def find_owner_bst(root, owner_name):
     # if root is empty, return None
     if root == None:
         return None
+    # if owner name is the same as root's owner name, return root
     if owner_name.lower() == root['owner'].lower():
         return root
     # check BOTH sides to account for edge case in capital letters
@@ -223,7 +262,22 @@ def add_pokemon_to_owner(owner_node):
     """
     Prompt user for a Pokemon ID, find the data, and add to this owner's pokedex if not duplicate.
     """
-    pass
+    # first, get the ID of the Pokemon to add
+    IDChoice = read_int_safe("Enter Pokemon ID to add: ")
+    # next, get the Pokemon dict by ID
+    pokemonToAdd = get_poke_dict_by_id(IDChoice)
+    # if the Pokemon is not found, print message and return
+    if not pokemonToAdd:
+        print(f"ID {IDChoice} not found in Honen data.")
+        return
+    # if the Pokemon is already in the pokedex, print message and return
+    if pokemonToAdd in owner_node['pokedex']:
+        print(f"Pokemon already in the list. No changes made.")
+        return
+    # if the Pokemon is not in the pokedex, add it and print success message
+    owner_node['pokedex'].append(pokemonToAdd)
+    print(f"Pokemon {pokemonToAdd['Name']} (ID {pokemonToAdd['ID']}) added to {owner_node['owner']}'s Pokedex.")
+
 
 def release_pokemon_by_name(owner_node):
     """
@@ -318,7 +372,49 @@ def existing_pokedex():
     - Evolve
     - Back
     """
-    pass
+
+    # set ownerRoot as global ownerRoot for this function
+    global ownerRoot
+
+    if not ownerRoot:
+        print("No owners at all.")
+        return
+
+    # get owner name
+    owner_name = input("Owner name: ")
+    # find owner node
+    owner_node = find_owner_bst(ownerRoot, owner_name)
+    # if owner node not found, print message and return
+    if not owner_node:
+        print(f"Owner '{owner_name}' not found.")
+        return
+    # if owner node found, print menu and get choices
+    while True:
+        print(f"\n-- {owner_node['owner']}'s Pokedex Menu --")
+        print("1. Add Pokemon")
+        print("2. Display Pokedex")
+        print("3. Release Pokemon")
+        print("4. Evolve Pokemon")
+        print("5. Back to Main")
+        choice = read_int_safe("Your choice: ")
+        # TODO: UP TO HERE IN LOGIC
+        if choice == OWNER_ADD_POKEMON:
+            add_pokemon_to_owner(owner_node)
+            pass
+        elif choice == OWNER_DISPLAY_POKEDEX:
+            # display_filter_sub_menu(owner_node)
+            pass
+        elif choice == OWNER_RELEASE_POKEMON:
+            # release_pokemon_by_name(owner_node)
+            pass
+        elif choice == OWNER_EVOLVE_POKEMON:
+            # evolve_pokemon_by_name(owner_node)
+            pass
+        elif choice == OWNER_BACK:
+            return
+        else:
+            print("Invalid choice.")
+
 
 def main_menu():
     """
@@ -347,6 +443,7 @@ def main_menu():
             create_owner_logic()
             pass
         elif choice == MAIN_EXIST_POKEDEX:
+            existing_pokedex()
             pass
         elif choice == MAIN_DELETE_POKEDEX:
             pass
