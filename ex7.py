@@ -29,6 +29,12 @@ DISP_NAME_STARTS = 5
 DISP_ALL = 6
 DISP_BACK = 7
 
+# Print all owners sub-menu options
+PRINT_OWNER_BFS = 1
+PRINT_OWNER_PRE = 2
+PRINT_OWNER_IN = 3
+PRINT_OWNER_POST = 4
+
 ########################
 # 0) Read from CSV -> HOENN_DATA
 ########################
@@ -286,13 +292,57 @@ def min_node(node):
     """
     Return the leftmost node in a BST subtree.
     """
-    pass
+    # if left is None, return node
+    if node['left'] == None:
+        return node
+    # else, recursively call min_node on left side
+    return min_node(node['left'])
+
+def delete_owner_logic():
+        # get global ownerRoot for use in delete_owner_bst
+        global ownerRoot
+        # if no owners, print message and return
+        if not ownerRoot:
+            print("No owners to delete.")
+            return
+        # first check if to delete owner is in tree, if not, print message and return
+        owner_to_delete = input("Owner name: ")
+        if not find_owner_bst(ownerRoot, owner_to_delete):
+            print(f"Owner '{owner_to_delete}' not found.")
+            return
+        print(f"Deleting {owner_to_delete}'s entire Pokedex...")
+        ownerRoot = delete_owner_bst(ownerRoot, owner_to_delete)
+        print("Pokedex deleted.")
+
 
 def delete_owner_bst(root, owner_name):
     """
     Remove a node from the BST by owner_name. Return updated root.
     """
-    pass
+    # recursively find owner: cannot rely on capital letters, so must check both sides
+    # if root is empty, return None
+    if root == None:
+        return None
+    # if owner name is the same as root's owner name, delete, account for children
+    if owner_name.lower() == root['owner'].lower():
+        # case 1: no children, return None
+        if root['left'] == None and root['right'] == None:
+            return None
+        # case 2: one child, return child
+        if root['left'] == None:
+            return root['right']
+        if root['right'] == None:
+            return root['left']
+        # case 3: two children, find min right, replace root, delete min right
+        min_right = min_node(root['right'])
+        root['owner'] = min_right['owner']
+        root['pokedex'] = min_right['pokedex']
+        root['right'] = delete_owner_bst(root['right'], min_right['owner'])
+        return root
+    # check BOTH sides to account for edge case in capital letters
+    root['left'] = delete_owner_bst(root['left'], owner_name)
+    root['right'] = delete_owner_bst(root['right'], owner_name)
+    return root
 
 
 ########################
@@ -303,25 +353,73 @@ def bfs_traversal(root):
     """
     BFS level-order traversal. Print each owner's name and # of pokemons.
     """
-    pass
+    if not root:
+        return
+
+    # create queue that starts with only root, then as we iterate through, add children in BFS order
+    queue = [root]
+    while True:
+        # pop out first item and print info
+        current = queue.pop(0)
+        print(f"\nOwner: {current['owner']}")
+        display_pokemon_list(current['pokedex'])
+        # add any children to queue
+        if current['left']:
+            queue.append(current['left'])
+        if current['right']:
+            queue.append(current['right'])
+        # This way only checks if we want to exit queue after added potential children, 
+        # avoids edge case of only 1 item in queue but has children
+        if not queue:
+            break
 
 def pre_order(root):
     """
     Pre-order traversal (root -> left -> right). Print data for each node.
     """
-    pass
+    # print out root, then left side (recursively), then right side
+    # current node:
+    print(f"\nOwner: {root['owner']}")
+    display_pokemon_list(root['pokedex'])
+    # left side nodes:
+    if root['left']:
+        pre_order(root['left'])
+    # right side nodes:
+    if root['right']:
+        pre_order(root['right'])
 
 def in_order(root):
     """
     In-order traversal (left -> root -> right). Print data for each node.
     """
-    pass
+    # print out leftside, then root, then right side
+    # left side nodes:
+    if root['left']:
+        in_order(root['left'])
+    # current node:
+    print(f"\nOwner: {root['owner']}")
+    display_pokemon_list(root['pokedex'])
+    # right side nodes:
+    if root['right']:
+        in_order(root['right'])
+
 
 def post_order(root):
     """
     Post-order traversal (left -> right -> root). Print data for each node.
     """
-    pass
+    # print out leftside, then right side, then root
+    # left side nodes:
+    if root['left']:
+        post_order(root['left'])
+    # right side nodes:
+    if root['right']:
+        post_order(root['right'])
+    # current node:
+    print(f"\nOwner: {root['owner']}")
+    display_pokemon_list(root['pokedex'])
+
+
 
 
 ########################
@@ -411,14 +509,48 @@ def gather_all_owners(root, arr):
     """
     Collect all BST nodes into a list (arr).
     """
-    pass
+    # if root is None, return empty list
+    if root == None:
+        return arr
+    # recursively gather all owners into the list
+    # if left side has children, gather them
+    if root['left']:
+        arr += gather_all_owners(root['left'], [])
+    # append current node's info
+    arr.append([root['owner'], len(root['pokedex'])])
+    # if right side has children, gather them
+    if root['right']:
+        arr += gather_all_owners(root['right'], [])
+    # return the accumulated list
+    return arr
 
 def sort_owners_by_num_pokemon():
     """
     Gather owners, sort them by (#pokedex size, then alpha), print results.
     """
-    pass
+    global ownerRoot
+    # if no owners, print message and return
+    if not ownerRoot:
+        print("No owners at all.")
+        return
+    # create empty list to store all owners
+    owner_list = []
+    # call gather_all_owners to fill the list
+    owner_list = gather_all_owners(ownerRoot, owner_list)
+    # bubble sort for num pokemon
+    for i in range(len(owner_list)):
+        for j in range(len(owner_list) - 1):
+            if owner_list[j][1] > owner_list[j + 1][1]:
+                owner_list[j], owner_list[j + 1] = owner_list[j + 1], owner_list[j]
+    # bubble sort for alpha: as if lowercase
+    for i in range(len(owner_list)):
+        for j in range(len(owner_list) - 1):
+            if owner_list[j][1] == owner_list[j + 1][1]:
+                if owner_list[j][0].lower() > owner_list[j + 1][0].lower():
+                    owner_list[j], owner_list[j + 1] = owner_list[j + 1], owner_list[j]
 
+    for owner in owner_list:
+        print(f"Owner: {owner[0]} (has {owner[1]} Pokemon)")
 
 ########################
 # 6) Print All
@@ -428,7 +560,33 @@ def print_all_owners():
     """
     Let user pick BFS, Pre, In, or Post. Print each owner's data/pokedex accordingly.
     """
-    pass
+    global ownerRoot
+    # if no owners, print message and return
+    if not ownerRoot:
+        print("No owners in the BST.")
+        return
+    # print menu options and get choice
+    print("1) BFS")
+    print("2) Pre-order")
+    print("3) In-order")
+    print("4) Post-order")
+    choice = read_int_safe("Your choice: ")
+    # call relevant function based on choice
+    if choice == PRINT_OWNER_BFS:
+        bfs_traversal(ownerRoot)
+        return
+    elif choice == PRINT_OWNER_PRE:
+        pre_order(ownerRoot)
+        return
+    elif choice == PRINT_OWNER_IN:
+        in_order(ownerRoot)
+        return
+    elif choice == PRINT_OWNER_POST:
+        post_order(ownerRoot)
+        return
+    else:
+        print("Invalid choice.")
+        return
 
 def pre_order_print(node):
     """
@@ -575,7 +733,7 @@ def main_menu():
         print("1. New Pokedex")
         print("2. Existing Pokedex")
         print("3. Delete a Pokedex")
-        print("4. Sort owners")
+        print("4. Display owners by number of Pokemon")
         print("5. Print all")
         print("6. Exit")
 
@@ -588,11 +746,13 @@ def main_menu():
             existing_pokedex()
             pass
         elif choice == MAIN_DELETE_POKEDEX:
-                # TODO: UP TO HERE IN LOGIC
+            delete_owner_logic()
             pass
         elif choice == MAIN_SORT_OWNERS:
+            sort_owners_by_num_pokemon()
             pass
         elif choice == MAIN_PRINT_ALL:
+            print_all_owners()
             pass
         elif choice == MAIN_EXIT:
             print("Goodbye!")
